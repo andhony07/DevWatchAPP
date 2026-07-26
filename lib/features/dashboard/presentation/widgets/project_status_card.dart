@@ -9,7 +9,8 @@ class ProjectStatusCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projects = ref.watch(projectProvider);
+    final projectState = ref.watch(projectProvider);
+    final projects = projectState.projects;
 
     final operational = projects
         .where((project) => project.status == 'Operational')
@@ -47,63 +48,85 @@ class ProjectStatusCard extends ConsumerWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
 
-            Row(
-              children: [
-                Expanded(
-                  child: _StatusItem(
-                    title: 'Total',
-                    value: '${projects.length}',
-                    icon: Icons.folder_outlined,
+            if (projectState.isLoading && projects.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatusItem(
+                      title: 'Total',
+                      value: '${projects.length}',
+                      icon: Icons.folder_outlined,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _StatusItem(
-                    title: 'Operational',
-                    value: '$operational',
-                    icon: Icons.check_circle_outline,
+                  Expanded(
+                    child: _StatusItem(
+                      title: 'Operational',
+                      value: '$operational',
+                      icon: Icons.check_circle_outline,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatusItem(
+                      title: 'Warning',
+                      value: '$warning',
+                      icon: Icons.warning_amber_outlined,
+                    ),
+                  ),
+                  Expanded(
+                    child: _StatusItem(
+                      title: 'Other',
+                      value: '$other',
+                      icon: Icons.info_outline,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                'Operational projects',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+
+              const SizedBox(height: 8),
+
+              LinearProgressIndicator(value: operationalProgress),
+
+              const SizedBox(height: 8),
+
+              Text(
+                projects.isEmpty
+                    ? 'No projects configured'
+                    : '$operational of ${projects.length} operational',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+
+              if (projectState.errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Project data unavailable',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
                   ),
                 ),
               ],
-            ),
-
-            const SizedBox(height: 18),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _StatusItem(
-                    title: 'Warning',
-                    value: '$warning',
-                    icon: Icons.warning_amber_outlined,
-                  ),
-                ),
-                Expanded(
-                  child: _StatusItem(
-                    title: 'Other',
-                    value: '$other',
-                    icon: Icons.info_outline,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Text(
-              'Operational projects',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(value: operationalProgress),
-            const SizedBox(height: 8),
-            Text(
-              projects.isEmpty
-                  ? 'No projects configured'
-                  : '$operational of ${projects.length} operational',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            ],
           ],
         ),
       ),

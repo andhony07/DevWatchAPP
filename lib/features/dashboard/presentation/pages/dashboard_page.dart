@@ -23,7 +23,7 @@ class DashboardPage extends ConsumerWidget {
     // Watch shared application state.
     final monitoringMetrics = ref.watch(monitoringProvider);
     final alerts = ref.watch(alertProvider);
-    final projects = ref.watch(projectProvider);
+    final projects = ref.watch(projectProvider).projects;
     final notifications = ref.watch(notificationProvider);
 
     // Monitoring metrics.

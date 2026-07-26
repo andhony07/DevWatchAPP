@@ -12,7 +12,8 @@ class SystemHealthCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alerts = ref.watch(alertProvider);
-    final projects = ref.watch(projectProvider);
+    final projectState = ref.watch(projectProvider);
+    final projects = projectState.projects;
     final metrics = ref.watch(monitoringProvider);
 
     final activeAlerts = alerts
@@ -49,6 +50,13 @@ class SystemHealthCard extends ConsumerWidget {
         description: 'Some infrastructure resources require review.',
         icon: Icons.warning_amber_outlined,
       );
+    } else if (projectState.errorMessage != null) {
+      health = const HealthState(
+        title: 'Project Data Unavailable',
+        description:
+            'DevWatch could not retrieve the latest project information.',
+        icon: Icons.cloud_off_outlined,
+      );
     } else {
       health = const HealthState(
         title: 'All Systems Operational',
@@ -64,7 +72,9 @@ class SystemHealthCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(health.icon, size: 42),
+
             const SizedBox(width: 16),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,31 +85,38 @@ class SystemHealthCard extends ConsumerWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 6),
+
                   Text(health.description),
+
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 20,
-                    runSpacing: 8,
-                    children: [
-                      _HealthDetail(
-                        label: 'Projects',
-                        value: '${projects.length}',
-                      ),
-                      _HealthDetail(
-                        label: 'Operational',
-                        value: '$operationalProjects',
-                      ),
-                      _HealthDetail(
-                        label: 'Active Alerts',
-                        value: '$activeAlerts',
-                      ),
-                      _HealthDetail(
-                        label: 'Metric Warnings',
-                        value: '$warningMetrics',
-                      ),
-                    ],
-                  ),
+
+                  if (projectState.isLoading && projects.isEmpty)
+                    const LinearProgressIndicator()
+                  else
+                    Wrap(
+                      spacing: 20,
+                      runSpacing: 8,
+                      children: [
+                        _HealthDetail(
+                          label: 'Projects',
+                          value: '${projects.length}',
+                        ),
+                        _HealthDetail(
+                          label: 'Operational',
+                          value: '$operationalProjects',
+                        ),
+                        _HealthDetail(
+                          label: 'Active Alerts',
+                          value: '$activeAlerts',
+                        ),
+                        _HealthDetail(
+                          label: 'Metric Warnings',
+                          value: '$warningMetrics',
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
