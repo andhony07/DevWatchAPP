@@ -1,125 +1,133 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/alert_model.dart';
+import '../providers/alert_provider.dart';
 import '../widgets/alert_card.dart';
 import '../widgets/alert_summary_card.dart';
 
-class AlertsPage extends StatefulWidget {
+class AlertsPage extends ConsumerStatefulWidget {
   const AlertsPage({super.key});
 
   @override
-  State<AlertsPage> createState() => _AlertsPageState();
+  ConsumerState<AlertsPage> createState() => _AlertsPageState();
 }
 
-class _AlertsPageState extends State<AlertsPage> {
+class _AlertsPageState extends ConsumerState<AlertsPage> {
   String _filter = 'All';
-
-  static const _alerts = [
-    AlertModel(
-      id: '1',
-      title: 'High CPU Usage',
-      description: 'CPU utilization exceeded the configured 85% threshold.',
-      source: 'Production API',
-      severity: AlertSeverity.critical,
-      status: AlertStatus.active,
-      triggeredAt: '5 min ago',
-    ),
-    AlertModel(
-      id: '2',
-      title: 'Memory Threshold Reached',
-      description: 'Memory utilization has remained above 80%.',
-      source: 'Worker Service',
-      severity: AlertSeverity.high,
-      status: AlertStatus.acknowledged,
-      triggeredAt: '18 min ago',
-    ),
-    AlertModel(
-      id: '3',
-      title: 'Response Time Increased',
-      description: 'Average API response time increased above 300 ms.',
-      source: 'API Gateway',
-      severity: AlertSeverity.medium,
-      status: AlertStatus.active,
-      triggeredAt: '42 min ago',
-    ),
-    AlertModel(
-      id: '4',
-      title: 'Database Connection Recovered',
-      description: 'Database connectivity returned to normal.',
-      source: 'Database',
-      severity: AlertSeverity.low,
-      status: AlertStatus.resolved,
-      triggeredAt: '2 hours ago',
-    ),
-  ];
-
-  List<AlertModel> get _filteredAlerts {
-    switch (_filter) {
-      case 'Active':
-        return _alerts
-            .where((alert) => alert.status == AlertStatus.active)
-            .toList();
-
-      case 'Acknowledged':
-        return _alerts
-            .where((alert) => alert.status == AlertStatus.acknowledged)
-            .toList();
-
-      case 'Resolved':
-        return _alerts
-            .where((alert) => alert.status == AlertStatus.resolved)
-            .toList();
-
-      default:
-        return _alerts;
-    }
-  }
 
   void _showDetails(AlertModel alert) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    alert.title,
+                    style: Theme.of(sheetContext).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(alert.description),
-                const SizedBox(height: 20),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.dns_outlined),
-                  title: const Text('Source'),
-                  subtitle: Text(alert.source),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.schedule),
-                  title: const Text('Triggered'),
-                  subtitle: Text(alert.triggeredAt),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Close'),
+                  const SizedBox(height: 12),
+
+                  Text(alert.description),
+
+                  const SizedBox(height: 20),
+
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.dns_outlined),
+                    title: const Text('Source'),
+                    subtitle: Text(alert.source),
                   ),
-                ),
-              ],
+
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.schedule),
+                    title: const Text('Triggered'),
+                    subtitle: Text(alert.triggeredAt),
+                  ),
+
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.warning_amber_outlined),
+                    title: const Text('Severity'),
+                    subtitle: Text(_severityLabel(alert.severity)),
+                  ),
+
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('Status'),
+                    subtitle: Text(_statusLabel(alert.status)),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  if (alert.status == AlertStatus.active) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ref
+                              .read(alertProvider.notifier)
+                              .acknowledgeAlert(alert.id);
+
+                          Navigator.of(sheetContext).pop();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${alert.title} acknowledged.'),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.visibility_outlined),
+                        label: const Text('Acknowledge'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
+                  if (alert.status != AlertStatus.resolved) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          ref
+                              .read(alertProvider.notifier)
+                              .resolveAlert(alert.id);
+
+                          Navigator.of(sheetContext).pop();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${alert.title} resolved.')),
+                          );
+                        },
+                        icon: const Icon(Icons.check_circle_outline),
+                        label: const Text('Resolve Alert'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(sheetContext).pop();
+                      },
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -127,9 +135,59 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
+  String _severityLabel(AlertSeverity severity) {
+    switch (severity) {
+      case AlertSeverity.critical:
+        return 'Critical';
+      case AlertSeverity.high:
+        return 'High';
+      case AlertSeverity.medium:
+        return 'Medium';
+      case AlertSeverity.low:
+        return 'Low';
+    }
+  }
+
+  String _statusLabel(AlertStatus status) {
+    switch (status) {
+      case AlertStatus.active:
+        return 'Active';
+      case AlertStatus.acknowledged:
+        return 'Acknowledged';
+      case AlertStatus.resolved:
+        return 'Resolved';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final alerts = _filteredAlerts;
+    final allAlerts = ref.watch(alertProvider);
+
+    final alerts = switch (_filter) {
+      'Active' =>
+        allAlerts.where((alert) => alert.status == AlertStatus.active).toList(),
+      'Acknowledged' =>
+        allAlerts
+            .where((alert) => alert.status == AlertStatus.acknowledged)
+            .toList(),
+      'Resolved' =>
+        allAlerts
+            .where((alert) => alert.status == AlertStatus.resolved)
+            .toList(),
+      _ => allAlerts,
+    };
+
+    final activeCount = allAlerts
+        .where((alert) => alert.status == AlertStatus.active)
+        .length;
+
+    final acknowledgedCount = allAlerts
+        .where((alert) => alert.status == AlertStatus.acknowledged)
+        .length;
+
+    final resolvedCount = allAlerts
+        .where((alert) => alert.status == AlertStatus.resolved)
+        .length;
 
     return Scaffold(
       appBar: AppBar(
@@ -146,7 +204,13 @@ class _AlertsPageState extends State<AlertsPage> {
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            onPressed: () {},
+            onPressed: () {
+              ref.read(alertProvider.notifier).resetAlerts();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Alerts refreshed.')),
+              );
+            },
             icon: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 8),
@@ -168,10 +232,12 @@ class _AlertsPageState extends State<AlertsPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
+
                   Text(
                     'Review infrastructure incidents and system warnings.',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
+
                   const SizedBox(height: 24),
 
                   LayoutBuilder(
@@ -185,25 +251,25 @@ class _AlertsPageState extends State<AlertsPage> {
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
                         childAspectRatio: columns == 4 ? 1.7 : 1.5,
-                        children: const [
+                        children: [
                           AlertSummaryCard(
                             title: 'Total Alerts',
-                            value: '4',
+                            value: '${allAlerts.length}',
                             icon: Icons.notifications_outlined,
                           ),
                           AlertSummaryCard(
                             title: 'Active',
-                            value: '2',
+                            value: '$activeCount',
                             icon: Icons.error_outline,
                           ),
                           AlertSummaryCard(
                             title: 'Acknowledged',
-                            value: '1',
+                            value: '$acknowledgedCount',
                             icon: Icons.visibility_outlined,
                           ),
                           AlertSummaryCard(
                             title: 'Resolved',
-                            value: '1',
+                            value: '$resolvedCount',
                             icon: Icons.check_circle_outline,
                           ),
                         ],
@@ -237,22 +303,35 @@ class _AlertsPageState extends State<AlertsPage> {
 
                   const SizedBox(height: 20),
 
-                  Text(
-                    '${alerts.length} alerts',
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Row(
+                    children: [
+                      Text(
+                        '${alerts.length} alerts',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Filter: $_filter',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 12),
 
-                  ...alerts.map(
-                    (alert) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: AlertCard(
-                        alert: alert,
-                        onTap: () => _showDetails(alert),
+                  if (alerts.isEmpty)
+                    _buildEmptyState(context)
+                  else
+                    ...alerts.map(
+                      (alert) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: AlertCard(
+                          alert: alert,
+                          onTap: () => _showDetails(alert),
+                        ),
                       ),
                     ),
-                  ),
 
                   const SizedBox(height: 20),
 
@@ -267,6 +346,35 @@ class _AlertsPageState extends State<AlertsPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      child: Column(
+        children: [
+          Icon(
+            Icons.notifications_off_outlined,
+            size: 52,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No $_filter alerts',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'There are currently no alerts matching this filter.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }

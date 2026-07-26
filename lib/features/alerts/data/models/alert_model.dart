@@ -20,4 +20,24 @@ class AlertModel {
   final AlertSeverity severity;
   final AlertStatus status;
   final String triggeredAt;
+
+  AlertModel copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? source,
+    AlertSeverity? severity,
+    AlertStatus? status,
+    String? triggeredAt,
+  }) {
+    return AlertModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      source: source ?? this.source,
+      severity: severity ?? this.severity,
+      status: status ?? this.status,
+      triggeredAt: triggeredAt ?? this.triggeredAt,
+    );
+  }
 }
