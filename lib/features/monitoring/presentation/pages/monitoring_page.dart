@@ -1,43 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/monitoring_metric.dart';
+import '../providers/monitoring_provider.dart';
 import '../widgets/monitoring_metric_card.dart';
 import '../widgets/performance_overview.dart';
 import '../widgets/service_health_card.dart';
 
-class MonitoringPage extends StatelessWidget {
+class MonitoringPage extends ConsumerWidget {
   const MonitoringPage({super.key});
-
-  static const _metrics = [
-    MonitoringMetric(
-      name: 'CPU Usage',
-      value: '42',
-      unit: '%',
-      progress: 0.42,
-      description: 'Average CPU utilization',
-    ),
-    MonitoringMetric(
-      name: 'Memory',
-      value: '68',
-      unit: '%',
-      progress: 0.68,
-      description: '10.9 GB of 16 GB',
-    ),
-    MonitoringMetric(
-      name: 'Disk Usage',
-      value: '54',
-      unit: '%',
-      progress: 0.54,
-      description: '216 GB of 400 GB',
-    ),
-    MonitoringMetric(
-      name: 'Network',
-      value: '42.8',
-      unit: 'MB/s',
-      progress: 0.43,
-      description: 'Current network throughput',
-    ),
-  ];
 
   static const _icons = [
     Icons.memory,
@@ -47,7 +17,9 @@ class MonitoringPage extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final metrics = ref.watch(monitoringProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Column(
@@ -63,7 +35,13 @@ class MonitoringPage extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            onPressed: () {},
+            onPressed: () {
+              ref.read(monitoringProvider.notifier).resetMetrics();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Monitoring metrics refreshed.')),
+              );
+            },
             icon: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 8),
@@ -90,6 +68,8 @@ class MonitoringPage extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 24),
+
+                  // Monitoring metric cards
                   LayoutBuilder(
                     builder: (context, constraints) {
                       int columns;
@@ -105,7 +85,7 @@ class MonitoringPage extends StatelessWidget {
                       return GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _metrics.length,
+                        itemCount: metrics.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columns,
                           crossAxisSpacing: 16,
@@ -113,15 +93,24 @@ class MonitoringPage extends StatelessWidget {
                           childAspectRatio: columns == 1 ? 1.7 : 1.2,
                         ),
                         itemBuilder: (context, index) {
+                          final metric = metrics[index];
+
+                          final icon = index < _icons.length
+                              ? _icons[index]
+                              : Icons.monitor_heart_outlined;
+
                           return MonitoringMetricCard(
-                            metric: _metrics[index],
-                            icon: _icons[index],
+                            metric: metric,
+                            icon: icon,
                           );
                         },
                       );
                     },
                   ),
+
                   const SizedBox(height: 20),
+
+                  // Service health and performance
                   LayoutBuilder(
                     builder: (context, constraints) {
                       if (constraints.maxWidth >= 900) {
@@ -144,7 +133,9 @@ class MonitoringPage extends StatelessWidget {
                       );
                     },
                   ),
+
                   const SizedBox(height: 30),
+
                   Center(
                     child: Text(
                       'Development metrics — live monitoring not connected',
