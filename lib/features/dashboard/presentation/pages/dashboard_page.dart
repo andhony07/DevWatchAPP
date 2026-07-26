@@ -13,6 +13,7 @@ import '../widgets/metric_card.dart';
 import '../widgets/project_status_card.dart';
 import '../widgets/recent_alerts_card.dart';
 import '../widgets/system_health_card.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -80,7 +81,15 @@ class DashboardPage extends ConsumerWidget {
           // Logout.
           IconButton(
             tooltip: 'Logout',
-            onPressed: () => context.go('/login'),
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+
+              if (!context.mounted) {
+                return;
+              }
+
+              context.go('/login');
+            },
             icon: const Icon(Icons.logout),
           ),
 

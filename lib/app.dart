@@ -4,22 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/app_constants.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'features/settings/presentation/providers/settings_provider.dart';
 
 class DevWatchApp extends ConsumerWidget {
   const DevWatchApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: settings.themeMode,
-      routerConfig: AppRouter.router,
+      themeMode: ThemeMode.system,
+      routerConfig: router,
     );
   }
 }
