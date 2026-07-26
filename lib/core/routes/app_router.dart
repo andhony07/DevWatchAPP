@@ -5,9 +5,11 @@ import '../../features/alerts/presentation/pages/alerts_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/monitoring/presentation/pages/monitoring_page.dart';
-import '../../features/projects/presentation/pages/projects_page.dart';
-import '../widgets/app_shell.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/projects/presentation/pages/projects_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
+import '../widgets/app_shell.dart';
 
 class AppRouter {
   AppRouter._();
@@ -53,7 +55,18 @@ class AppRouter {
           ),
           GoRoute(
             path: '/notifications',
+            name: 'notifications',
             builder: (context, state) => const NotificationsPage(),
+          ),
+          GoRoute(
+            path: '/profile',
+            name: 'profile',
+            builder: (context, state) => const ProfilePage(),
+          ),
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const SettingsPage(),
           ),
         ],
       ),

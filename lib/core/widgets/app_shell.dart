@@ -53,6 +53,26 @@ class AppShell extends StatelessWidget {
     context.go(_destinations[index].route);
   }
 
+  void _handleAccountAction(BuildContext context, String value) {
+    switch (value) {
+      case 'profile':
+        context.go('/profile');
+        break;
+
+      case 'notifications':
+        context.go('/notifications');
+        break;
+
+      case 'settings':
+        context.go('/settings');
+        break;
+
+      case 'logout':
+        context.go('/login');
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(context);
@@ -75,6 +95,70 @@ class AppShell extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Icon(Icons.monitor_heart, size: 32),
                   ),
+                  trailing: Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 20),
+                        child: PopupMenuButton<String>(
+                          tooltip: 'Account',
+                          onSelected: (value) {
+                            _handleAccountAction(context, value);
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: 'profile',
+                              child: ListTile(
+                                leading: Icon(Icons.person_outline),
+                                title: Text('Profile'),
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'notifications',
+                              child: ListTile(
+                                leading: Icon(Icons.notifications_outlined),
+                                title: Text('Notifications'),
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'settings',
+                              child: ListTile(
+                                leading: Icon(Icons.settings_outlined),
+                                title: Text('Settings'),
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                            PopupMenuDivider(),
+                            PopupMenuItem(
+                              value: 'logout',
+                              child: ListTile(
+                                leading: Icon(Icons.logout),
+                                title: Text('Logout'),
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ],
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: constraints.maxWidth >= 1200
+                                ? const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.account_circle_outlined),
+                                      SizedBox(width: 12),
+                                      Text('Account'),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_drop_down),
+                                    ],
+                                  )
+                                : const Icon(Icons.account_circle_outlined),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   destinations: _destinations
                       .map(
                         (destination) => NavigationRailDestination(
@@ -85,7 +169,9 @@ class AppShell extends StatelessWidget {
                       )
                       .toList(),
                 ),
+
                 const VerticalDivider(width: 1),
+
                 Expanded(child: SafeArea(child: child)),
               ],
             ),
@@ -94,20 +180,91 @@ class AppShell extends StatelessWidget {
 
         return Scaffold(
           body: SafeArea(bottom: false, child: child),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) {
-              _navigate(context, index);
-            },
-            destinations: _destinations
-                .map(
-                  (destination) => NavigationDestination(
-                    icon: Icon(destination.icon),
-                    selectedIcon: Icon(destination.selectedIcon),
-                    label: destination.label,
+          bottomNavigationBar: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NavigationBar(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (index) {
+                  _navigate(context, index);
+                },
+                destinations: _destinations
+                    .map(
+                      (destination) => NavigationDestination(
+                        icon: Icon(destination.icon),
+                        selectedIcon: Icon(destination.selectedIcon),
+                        label: destination.label,
+                      ),
+                    )
+                    .toList(),
+              ),
+
+              SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 42,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      _showMobileAccountMenu(context);
+                    },
+                    icon: const Icon(Icons.account_circle_outlined),
+                    label: const Text('Account & Settings'),
                   ),
-                )
-                .toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMobileAccountMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: const Text('Profile'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.go('/profile');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: const Text('Notifications'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.go('/notifications');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings_outlined),
+                  title: const Text('Settings'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.go('/settings');
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text('Logout'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.go('/login');
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
