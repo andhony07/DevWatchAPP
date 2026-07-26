@@ -86,14 +86,14 @@ class AppShell extends StatelessWidget {
                       .toList(),
                 ),
                 const VerticalDivider(width: 1),
-                Expanded(child: child),
+                Expanded(child: SafeArea(child: child)),
               ],
             ),
           );
         }
 
         return Scaffold(
-          body: child,
+          body: SafeArea(bottom: false, child: child),
           bottomNavigationBar: NavigationBar(
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) {

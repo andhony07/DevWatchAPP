@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data/models/project_model.dart';
+
 class AddProjectDialog extends StatefulWidget {
   const AddProjectDialog({super.key});
 
@@ -11,6 +13,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _repositoryController = TextEditingController();
 
   String _environment = 'Development';
@@ -19,14 +22,27 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     _repositoryController.dispose();
     super.dispose();
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pop();
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
+
+    final project = ProjectModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim(),
+      environment: _environment,
+      cloudProvider: _provider,
+      status: 'Operational',
+      repositoryUrl: _repositoryController.text.trim(),
+    );
+
+    Navigator.of(context).pop(project);
   }
 
   @override
@@ -57,11 +73,21 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    prefixIcon: Icon(Icons.description_outlined),
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
                   controller: _repositoryController,
                   decoration: const InputDecoration(
                     labelText: 'Repository URL',
                     prefixIcon: Icon(Icons.link),
                   ),
+                  keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -119,7 +145,11 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Add Project')),
+        FilledButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.add),
+          label: const Text('Add Project'),
+        ),
       ],
     );
   }
