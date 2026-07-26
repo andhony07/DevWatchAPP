@@ -6,7 +6,9 @@ import '../../../alerts/data/models/alert_model.dart';
 import '../../../alerts/presentation/providers/alert_provider.dart';
 import '../../../monitoring/data/models/monitoring_metric.dart';
 import '../../../monitoring/presentation/providers/monitoring_provider.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../projects/presentation/providers/project_provider.dart';
+
 import '../widgets/metric_card.dart';
 import '../widgets/project_status_card.dart';
 import '../widgets/recent_alerts_card.dart';
@@ -17,14 +19,18 @@ class DashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch shared application state.
     final monitoringMetrics = ref.watch(monitoringProvider);
     final alerts = ref.watch(alertProvider);
     final projects = ref.watch(projectProvider);
+    final notifications = ref.watch(notificationProvider);
 
+    // Monitoring metrics.
     final cpu = _findMetric(monitoringMetrics, 'cpu');
     final memory = _findMetric(monitoringMetrics, 'memory');
     final response = _findMetric(monitoringMetrics, 'response');
 
+    // Alert information.
     final activeAlerts = alerts
         .where((alert) => alert.status == AlertStatus.active)
         .length;
@@ -35,8 +41,14 @@ class DashboardPage extends ConsumerWidget {
           alert.severity == AlertSeverity.critical,
     );
 
+    // Project information.
     final operationalProjects = projects
         .where((project) => project.status == 'Operational')
+        .length;
+
+    // Notification information.
+    final unreadNotifications = notifications
+        .where((notification) => !notification.isRead)
         .length;
 
     return Scaffold(
@@ -52,24 +64,30 @@ class DashboardPage extends ConsumerWidget {
           ],
         ),
         actions: [
+          // Notifications.
           IconButton(
             tooltip: 'Notifications',
-            onPressed: () => context.go('/alerts'),
+            onPressed: () => context.go('/notifications'),
             icon: Badge(
-              isLabelVisible: activeAlerts > 0,
-              label: Text('$activeAlerts'),
+              isLabelVisible: unreadNotifications > 0,
+              label: Text('$unreadNotifications'),
               child: const Icon(Icons.notifications_none),
             ),
           ),
+
           const SizedBox(width: 4),
+
+          // Logout.
           IconButton(
             tooltip: 'Logout',
             onPressed: () => context.go('/login'),
             icon: const Icon(Icons.logout),
           ),
+
           const SizedBox(width: 8),
         ],
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -85,7 +103,9 @@ class DashboardPage extends ConsumerWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     'Monitor infrastructure health and system performance.',
                     style: Theme.of(context).textTheme.bodyLarge,
@@ -93,10 +113,12 @@ class DashboardPage extends ConsumerWidget {
 
                   const SizedBox(height: 24),
 
+                  // Overall system health.
                   const SystemHealthCard(),
 
                   const SizedBox(height: 20),
 
+                  // Infrastructure metrics.
                   LayoutBuilder(
                     builder: (context, constraints) {
                       int columns;
@@ -126,6 +148,7 @@ class DashboardPage extends ConsumerWidget {
                             icon: Icons.memory,
                             progress: cpu?.progress ?? 0,
                           ),
+
                           MetricCard(
                             title: 'Memory',
                             value: memory == null
@@ -135,6 +158,7 @@ class DashboardPage extends ConsumerWidget {
                             icon: Icons.storage_outlined,
                             progress: memory?.progress ?? 0,
                           ),
+
                           MetricCard(
                             title: 'Projects',
                             value: '${projects.length}',
@@ -145,6 +169,7 @@ class DashboardPage extends ConsumerWidget {
                                 ? 0
                                 : operationalProjects / projects.length,
                           ),
+
                           MetricCard(
                             title: 'Response',
                             value: response == null
@@ -163,6 +188,7 @@ class DashboardPage extends ConsumerWidget {
 
                   const SizedBox(height: 20),
 
+                  // Active alert banner.
                   _buildAlertBanner(
                     context,
                     activeAlerts: activeAlerts,
@@ -171,6 +197,7 @@ class DashboardPage extends ConsumerWidget {
 
                   const SizedBox(height: 20),
 
+                  // Alerts and project status.
                   LayoutBuilder(
                     builder: (context, constraints) {
                       if (constraints.maxWidth >= 900) {

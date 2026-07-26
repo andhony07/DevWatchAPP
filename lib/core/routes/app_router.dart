@@ -7,6 +7,7 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/monitoring/presentation/pages/monitoring_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../widgets/app_shell.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 
 class AppRouter {
   AppRouter._();
@@ -49,6 +50,10 @@ class AppRouter {
             path: '/ai-analysis',
             name: 'aiAnalysis',
             builder: (context, state) => const AiAnalysisPage(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => const NotificationsPage(),
           ),
         ],
       ),
