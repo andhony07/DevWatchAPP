@@ -4,11 +4,7 @@ import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
-enum AuthStatus {
-  initial,
-  authenticated,
-  unauthenticated,
-}
+enum AuthStatus { initial, authenticated, unauthenticated }
 
 class AuthState {
   const AuthState({
@@ -19,10 +15,10 @@ class AuthState {
   });
 
   const AuthState.initial()
-      : status = AuthStatus.initial,
-        user = null,
-        isLoading = false,
-        errorMessage = null;
+    : status = AuthStatus.initial,
+      user = null,
+      isLoading = false,
+      errorMessage = null;
 
   final AuthStatus status;
   final AuthUser? user;
@@ -65,9 +61,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final hasSession = await _repository.hasStoredSession();
 
       if (!hasSession) {
-        state = const AuthState(
-          status: AuthStatus.unauthenticated,
-        );
+        state = const AuthState(status: AuthStatus.unauthenticated);
         return;
       }
 
@@ -87,20 +81,12 @@ class AuthNotifier extends Notifier<AuthState> {
         user: restoredUser,
       );
     } catch (_) {
-      state = const AuthState(
-        status: AuthStatus.unauthenticated,
-      );
+      state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
 
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
-    state = state.copyWith(
-      isLoading: true,
-      clearError: true,
-    );
+  Future<bool> login({required String email, required String password}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
 
     try {
       final user = await _repository.login(
@@ -108,10 +94,7 @@ class AuthNotifier extends Notifier<AuthState> {
         password: password,
       );
 
-      state = AuthState(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
+      state = AuthState(status: AuthStatus.authenticated, user: user);
 
       return true;
     } catch (error) {
@@ -129,16 +112,12 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       await _repository.logout();
     } finally {
-      state = const AuthState(
-        status: AuthStatus.unauthenticated,
-      );
+      state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
 
   void clearError() {
-    state = state.copyWith(
-      clearError: true,
-    );
+    state = state.copyWith(clearError: true);
   }
 
   String _cleanErrorMessage(Object error) {
