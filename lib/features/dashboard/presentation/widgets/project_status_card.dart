@@ -1,39 +1,108 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class ProjectStatusCard extends StatelessWidget {
+import '../../../projects/presentation/providers/project_provider.dart';
+
+class ProjectStatusCard extends ConsumerWidget {
   const ProjectStatusCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final projects = ref.watch(projectProvider);
+
+    final operational = projects
+        .where((project) => project.status == 'Operational')
+        .length;
+
+    final warning = projects
+        .where((project) => project.status == 'Warning')
+        .length;
+
+    final other = projects.length - operational - warning;
+
+    final operationalProgress = projects.isEmpty
+        ? 0.0
+        : operational / projects.length;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Project Status',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Project Status',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.go('/projects'),
+                  child: const Text('View All'),
+                ),
+              ],
             ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _StatusItem(
+                    title: 'Total',
+                    value: '${projects.length}',
+                    icon: Icons.folder_outlined,
+                  ),
+                ),
+                Expanded(
+                  child: _StatusItem(
+                    title: 'Operational',
+                    value: '$operational',
+                    icon: Icons.check_circle_outline,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 18),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _StatusItem(
+                    title: 'Warning',
+                    value: '$warning',
+                    icon: Icons.warning_amber_outlined,
+                  ),
+                ),
+                Expanded(
+                  child: _StatusItem(
+                    title: 'Other',
+                    value: '$other',
+                    icon: Icons.info_outline,
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 20),
-            const _ProjectItem(
-              name: 'Production API',
-              environment: 'Production',
-              status: 'Operational',
+
+            Text(
+              'Operational projects',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
-            const Divider(),
-            const _ProjectItem(
-              name: 'Web Application',
-              environment: 'Production',
-              status: 'Operational',
-            ),
-            const Divider(),
-            const _ProjectItem(
-              name: 'Worker Service',
-              environment: 'Staging',
-              status: 'Warning',
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: operationalProgress),
+            const SizedBox(height: 8),
+            Text(
+              projects.isEmpty
+                  ? 'No projects configured'
+                  : '$operational of ${projects.length} operational',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
@@ -42,37 +111,36 @@ class ProjectStatusCard extends StatelessWidget {
   }
 }
 
-class _ProjectItem extends StatelessWidget {
-  const _ProjectItem({
-    required this.name,
-    required this.environment,
-    required this.status,
+class _StatusItem extends StatelessWidget {
+  const _StatusItem({
+    required this.title,
+    required this.value,
+    required this.icon,
   });
 
-  final String name;
-  final String environment;
-  final String status;
+  final String title;
+  final String value;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          const Icon(Icons.cloud_outlined),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(environment, style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ),
-          Text(status),
-        ],
-      ),
+    return Column(
+      children: [
+        Icon(icon),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }
